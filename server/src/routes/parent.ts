@@ -39,7 +39,21 @@ router.get('/me/overview', requireAuth(), requireParent(), async (req: AuthedReq
         .maybeSingle();
       if (sErr) throw new Error(`查询申报失败: ${sErr.message}`);
       if (sub) {
-        mySubmission = { id: sub.id, theme: sub.theme, created_at: sub.created_at, updated_at: sub.updated_at, score: sub.scores };
+        const sc = (Array.isArray(sub.scores) ? sub.scores[0] : sub.scores) as any;
+        mySubmission = {
+          id: sub.id,
+          student_no: student.student_no,
+          student_name: student.name,
+          theme: sub.theme,
+          content: sc?.content ?? null,
+          expression: sc?.expression ?? null,
+          poise: sc?.poise ?? null,
+          total: sc?.total ?? null,
+          best_star: sc?.best_star ?? false,
+          scored_at: sc?.updated_at ?? null,
+          created_at: sub.created_at,
+          updated_at: sub.updated_at,
+        };
       }
     }
 
@@ -54,7 +68,12 @@ router.get('/me/overview', requireAuth(), requireParent(), async (req: AuthedReq
       submittedCount = count ?? 0;
     }
 
-    res.json({ task: task ?? null, student, mySubmission, submittedCount });
+    res.json({
+      task: task ?? null,
+      student: student ? { id: student.id, student_no: student.student_no, student_name: student.name } : null,
+      my_submission: mySubmission,
+      submitted_count: submittedCount,
+    });
   } catch (e) {
     next(e);
   }

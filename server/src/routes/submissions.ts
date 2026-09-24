@@ -24,15 +24,22 @@ router.get('/tasks/:taskId/submissions', requireAuth(), async (req: AuthedReques
       .eq('task_id', taskId);
     if (error) throw new Error(`查询申报记录失败: ${error.message}`);
 
-    const rows = (data ?? []).map((r: any) => ({
-      id: r.id,
-      task_id: r.task_id,
-      theme: r.theme,
-      created_at: r.created_at,
-      updated_at: r.updated_at,
-      student: r.students,
-      score: r.scores,
-    }));
+    const rows = (data ?? []).map((r: any) => {
+      const sc = (Array.isArray(r.scores) ? r.scores[0] : r.scores) as any;
+      return {
+        id: r.id,
+        task_id: r.task_id,
+        student_no: r.students?.student_no ?? '',
+        student_name: r.students?.name ?? '未知同学',
+        theme: r.theme ?? '',
+        content: sc?.content ?? null,
+        expression: sc?.expression ?? null,
+        poise: sc?.poise ?? null,
+        total: sc?.total ?? null,
+        best_star: sc?.best_star ?? false,
+        scored_at: sc?.updated_at ?? null,
+      };
+    });
     res.json({ submissions: sortByStudentNo(rows) });
   } catch (e) {
     next(e);

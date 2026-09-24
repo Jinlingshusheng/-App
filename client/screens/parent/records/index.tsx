@@ -69,10 +69,10 @@ export default function RecordsScreen() {
               style={{ shadowColor: '#1e3a5f', shadowOpacity: 0.05, shadowRadius: 8, shadowOffset: { width: 0, height: 3 }, elevation: 1 }}>
               <View className="flex-row items-center mb-2">
                 <View className="w-9 h-9 rounded-full bg-[#e7edf5] items-center justify-center mr-3">
-                  <Text className="text-navysoft text-[15px] font-bold">{item.student_name.slice(0, 1)}</Text>
+                  <Text className="text-navysoft text-[15px] font-bold">{(item.student_name || '?').slice(0, 1)}</Text>
                 </View>
                 <View className="flex-1">
-                  <Text className="text-ink text-[15px] font-semibold">{item.student_name}</Text>
+                  <Text className="text-ink text-[15px] font-semibold">{item.student_name || '未知同学'}</Text>
                   <Text className="text-ink-muted text-[12px]">学号 {item.student_no}</Text>
                 </View>
                 <View className="flex-row items-center">
