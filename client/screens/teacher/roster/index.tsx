@@ -43,6 +43,15 @@ export default function RosterScreen() {
   const [pasteVisible, setPasteVisible] = useState(false);
   const [pasteText, setPasteText] = useState('');
 
+  // 一键清除确认弹窗
+  const [confirmClearVisible, setConfirmClearVisible] = useState(false);
+
+  // 查看学生报名弹窗
+  const [subVisible, setSubVisible] = useState(false);
+  const [subs, setSubs] = useState<any[]>([]);
+  const [subLoading, setSubLoading] = useState(false);
+  const [subTaskName, setSubTaskName] = useState('');
+
   const load = useCallback(async () => {
     if (!token) return;
     try {
@@ -152,12 +161,40 @@ export default function RosterScreen() {
   };
 
   const clearAll = async () => {
+    setLoading(true);
     try {
       await api.clearStudents(token);
       Toast.show({ type: 'success', text1: '名单已清空' });
       load();
     } catch (e: any) {
       Toast.show({ type: 'error', text1: e?.message || '清空失败' });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // 打开一键清除确认弹窗
+  const openClearConfirm = () => setConfirmClearVisible(true);
+
+  // 加载并展示所有学生报名内容
+  const openSubs = async () => {
+    setSubLoading(true);
+    try {
+      const { task } = await api.getActiveTask(token);
+      if (!task) {
+        setSubs([]);
+        setSubTaskName('');
+        setSubVisible(true);
+        return;
+      }
+      const { submissions } = await api.getSubmissions(token, task.id);
+      setSubs(submissions || []);
+      setSubTaskName(task.name || '');
+      setSubVisible(true);
+    } catch (e: any) {
+      Toast.show({ type: 'error', text1: e?.message || '加载报名内容失败' });
+    } finally {
+      setSubLoading(false);
     }
   };
 
@@ -171,12 +208,26 @@ export default function RosterScreen() {
           <View>
             <StarryHeader title="班级名单" subtitle={`共 ${students.length} 名学生 · 家长注册时按此名单绑定孩子`} />
             <View className="px-4 pt-4">
-              <View className="flex-row gap-2 mb-4">
+              <View className="flex-row gap-2 mb-2">
                 <TouchableOpacity
                   onPress={() => router.push('/teacher/tasks')}
                   className="bg-cream border border-navydark/20 rounded-2xl px-4 py-3 flex-1 items-center"
                 >
                   <Text className="text-navydark text-[13px] font-medium">去发布任务</Text>
+                </TouchableOpacity>
+              </View>
+              <View className="flex-row gap-2 mb-4">
+                <TouchableOpacity
+                  onPress={openSubs}
+                  className="flex-1 bg-navydark rounded-2xl px-4 py-3 items-center"
+                >
+                  <Text className="text-gold text-[13px] font-semibold">查看学生报名</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  onPress={openClearConfirm}
+                  className="flex-1 bg-white border border-[#c0392b]/40 rounded-2xl px-4 py-3 items-center"
+                >
+                  <Text className="text-[#c0392b] text-[13px] font-medium">一键清除学生</Text>
                 </TouchableOpacity>
               </View>
             </View>
@@ -231,7 +282,7 @@ export default function RosterScreen() {
                 >
                   <Text className="text-navydark text-[14px] font-medium">粘贴文本</Text>
                 </TouchableOpacity>
-                <TouchableOpacity onPress={clearAll} className="flex-1 bg-white border border-[#c0392b]/30 rounded-2xl py-3 items-center">
+                <TouchableOpacity onPress={openClearConfirm} className="flex-1 bg-white border border-[#c0392b]/30 rounded-2xl py-3 items-center">
                   <Text className="text-[#c0392b] text-[14px] font-medium">清空名单</Text>
                 </TouchableOpacity>
               </View>
@@ -266,6 +317,88 @@ export default function RosterScreen() {
               <Field label="名单内容" value={pasteText} onChangeText={setPasteText} multiline placeholder={'6, 赵子豪\n7, 钱思远\n...'} />
             </ScrollView>
             <NavyButton title="导入" onPress={handlePasteText} loading={loading} />
+          </View>
+        </KeyboardAvoidingView>
+      </Modal>
+
+      {/* 一键清除确认弹窗 */}
+      <Modal visible={confirmClearVisible} transparent animationType="fade">
+        <View className="flex-1 bg-black/40 items-center justify-center px-6">
+          <View className="w-full max-w-sm bg-white rounded-3xl p-6">
+            <Text className="text-[18px] font-bold text-navydark text-center mb-2">一键清除学生</Text>
+            <Text className="text-[13px] text-ink-muted text-center leading-5 mb-5">
+              确定要清除全部 {students.length} 名学生吗？{'\n'}清除后名单、绑定关系及报名、打分记录将一并删除，且无法恢复。
+            </Text>
+            <View className="flex-row gap-3">
+              <TouchableOpacity
+                onPress={() => setConfirmClearVisible(false)}
+                className="flex-1 bg-[#f1eeea] rounded-2xl py-3 items-center"
+              >
+                <Text className="text-ink text-[14px] font-medium">取消</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                onPress={() => { setConfirmClearVisible(false); clearAll(); }}
+                className="flex-1 bg-[#c0392b] rounded-2xl py-3 items-center"
+              >
+                <Text className="text-white text-[14px] font-semibold">确认清除</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
+
+      {/* 查看学生报名弹窗 */}
+      <Modal visible={subVisible} transparent animationType="slide">
+        <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} className="flex-1 justify-end">
+          <TouchableOpacity className="flex-1 bg-black/30" onPress={() => setSubVisible(false)} />
+          <View className="bg-white rounded-t-3xl p-5 pb-8 max-h-[85%]">
+            <View className="flex-row items-center justify-between mb-1">
+              <Text className="text-[18px] font-bold text-navydark">学生报名内容</Text>
+              <TouchableOpacity onPress={() => setSubVisible(false)} className="px-2 py-1">
+                <Text className="text-ink-muted text-[18px]">✕</Text>
+              </TouchableOpacity>
+            </View>
+            <Text className="text-[12px] text-ink-muted mb-3">
+              {subTaskName ? `任务：${subTaskName}` : '当前没有进行中的任务'}
+            </Text>
+            {subLoading ? (
+              <View className="py-10 items-center">
+                <Text className="text-ink-muted">加载中…</Text>
+              </View>
+            ) : subs.length === 0 ? (
+              <View className="py-10 items-center">
+                <Text className="text-ink-muted">暂无学生报名</Text>
+              </View>
+            ) : (
+              <ScrollView className="max-h-[68%]">
+                <View className="gap-2">
+                  {subs.map((s: any) => {
+                    const scored = s.total != null || s.content != null;
+                    return (
+                      <View key={s.id} className="bg-[#f7f4ee] rounded-2xl p-3.5">
+                        <View className="flex-row items-center justify-between mb-1">
+                          <View className="flex-row items-center">
+                            <View className="w-8 h-8 rounded-full bg-[#e7edf5] items-center justify-center mr-2">
+                              <Text className="text-navydark text-[12px] font-bold">{(s.student_name || '?').slice(0, 1)}</Text>
+                            </View>
+                            <Text className="text-ink text-[14px] font-semibold">{s.student_name || '未知'}</Text>
+                            <Text className="text-ink-muted text-[11px] ml-2">学号 {s.student_no ?? '--'}</Text>
+                          </View>
+                          {s.best_star ? (
+                            <Text className="text-gold-dark text-[12px] font-bold">★ 最佳</Text>
+                          ) : scored ? (
+                            <Text className="text-[#0f766e] text-[12px] font-medium">已打分</Text>
+                          ) : (
+                            <Text className="text-ink-muted text-[12px]">未打分</Text>
+                          )}
+                        </View>
+                        <Text className="text-[13px] text-ink leading-5">主题：{s.theme || '--'}</Text>
+                      </View>
+                    );
+                  })}
+                </View>
+              </ScrollView>
+            )}
           </View>
         </KeyboardAvoidingView>
       </Modal>
