@@ -1,55 +1,146 @@
-// @ts-nocheck
-/**
- * 通用认证上下文
- *
- * 基于固定的 API 接口实现，可复用到其他项目
- * 其他项目使用时，只需修改 @api 的导入路径指向项目的 api 模块
- *
- * 注意：
- * - 如果需要登录/鉴权场景，请扩展本文件，完善 login/logout、token 管理、用户信息获取与刷新等逻辑
- * - 将示例中的占位实现替换为项目实际的接口调用与状态管理
- */
-import React, { createContext, useContext, ReactNode } from "react";
+import React, {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useState,
+} from 'react';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { api } from '@/utils/api';
 
-interface UserOut {
+const TOKEN_KEY = 'xczd_star_token';
+const USER_KEY = 'xczd_star_user';
 
+export interface AuthUser {
+  id: number;
+  username: string;
+  role: 'teacher' | 'parent';
+  name: string | null;
 }
 
 interface AuthContextType {
-  user: UserOut | null;
+  user: AuthUser | null;
   token: string | null;
   isAuthenticated: boolean;
   isLoading: boolean;
-  login: (token: string) => Promise<void>;
+  login: (username: string, password: string) => Promise<AuthUser>;
+  register: (payload: {
+    username: string;
+    password: string;
+    name: string;
+    student_no: string;
+    student_name: string;
+  }) => Promise<AuthUser>;
   logout: () => Promise<void>;
-  updateUser: (userData: Partial<UserOut>) => void;
+  updateUser: (patch: Partial<AuthUser>) => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-  const value: AuthContextType = {
-    user: null,
-    token: null,
-    isAuthenticated: false,
-    isLoading: false,
+export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const [user, setUser] = useState<AuthUser | null>(null);
+  const [token, setToken] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
 
-    // 登录逻辑，根据项目实际情况实现
-    login: async (token: string) => {}, // eslint-disable-line @typescript-eslint/no-empty-function
+  useEffect(() => {
+    (async () => {
+      try {
+        const [t, u] = await Promise.all([
+          AsyncStorage.getItem(TOKEN_KEY),
+          AsyncStorage.getItem(USER_KEY),
+        ]);
+        if (t) setToken(t);
+        if (u) setUser(JSON.parse(u));
+      } catch {
+        /* ignore */
+      } finally {
+        setIsLoading(false);
+      }
+    })();
+  }, []);
 
-    // 登出逻辑，根据项目实际情况实现
-    logout: async () => {}, // eslint-disable-line @typescript-eslint/no-empty-function
+  const persist = useCallback(async (t: string | null, u: AuthUser | null) => {
+    try {
+      if (t) await AsyncStorage.setItem(TOKEN_KEY, t);
+      else await AsyncStorage.removeItem(TOKEN_KEY);
+      if (u) await AsyncStorage.setItem(USER_KEY, JSON.stringify(u));
+      else await AsyncStorage.removeItem(USER_KEY);
+    } catch {
+      /* ignore */
+    }
+  }, []);
 
-    // 更新用户信息，根据项目实际情况实现
-    updateUser: () => {}, // eslint-disable-line @typescript-eslint/no-empty-function
-  };
+  const login = useCallback(
+    async (username: string, password: string) => {
+      const { token: t, user: u } = await api.login({ username, password });
+      setToken(t);
+      setUser(u);
+      await persist(t, u);
+      return u as AuthUser;
+    },
+    [persist]
+  );
+
+  const register = useCallback(
+    async (payload: {
+      username: string;
+      password: string;
+      name: string;
+      student_no: string;
+      student_name: string;
+    }) => {
+      const { token: t, user: u } = await api.register(payload);
+      setToken(t);
+      setUser(u);
+      await persist(t, u);
+      return u as AuthUser;
+    },
+    [persist]
+  );
+
+  const logout = useCallback(async () => {
+    try {
+      await api.logout(token);
+    } catch {
+      /* ignore */
+    }
+    setToken(null);
+    setUser(null);
+    await persist(null, null);
+  }, [token, persist]);
+
+  const updateUser = useCallback(
+    (patch: Partial<AuthUser>) => {
+      setUser((prev) => {
+        if (!prev) return prev;
+        const next = { ...prev, ...patch };
+        persist(token, next);
+        return next;
+      });
+    },
+    [token, persist]
+  );
+
+  const value = useMemo(
+    () => ({
+      user,
+      token,
+      isAuthenticated: !!token && !!user,
+      isLoading,
+      login,
+      register,
+      logout,
+      updateUser,
+    }),
+    [user, token, isLoading, login, register, logout, updateUser]
+  );
+
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };
 
 export const useAuth = (): AuthContextType => {
-  const context = useContext(AuthContext);
-  if (context === undefined) {
-    throw new Error("useAuth must be used within an AuthProvider");
-  }
-  return context;
+  const ctx = useContext(AuthContext);
+  if (!ctx) throw new Error('useAuth must be used within AuthProvider');
+  return ctx;
 };

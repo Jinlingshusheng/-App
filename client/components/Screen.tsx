@@ -102,7 +102,8 @@ const KeyboardAwareScrollable = ({
   const enhancedContentStyle = [{ ...merged, paddingBottom: currentPB + extraPadding }];
 
   // 基础配置 props，用于传递给 KeyboardAware 组件
-  const commonProps = {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const commonProps: any = {
     ...childAttrs,
     contentContainerStyle: enhancedContentStyle,
     keyboardShouldPersistTaps: childAttrs['keyboardShouldPersistTaps'] ?? 'handled',

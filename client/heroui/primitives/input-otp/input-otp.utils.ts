@@ -1,3 +1,4 @@
+/* eslint-disable */
 /**
  * Regex pattern for digits only
  */

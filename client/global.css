@@ -25,8 +25,8 @@
   :root {
     @variant light {
       /* Base Colors */
-      --background: #fafafa;
-      --foreground: var(--eclipse);
+      --background: #f6f2e9;
+      --foreground: #263238;
 
       /* Surface: Used for non-overlay components (cards, accordions, disclosure groups) */
       --surface: var(--white);
@@ -41,7 +41,7 @@
       --default: oklch(94% 0.001 286.375);
       --default-foreground: var(--eclipse);
 
-      --accent: oklch(0.6204 0.195 253.83);
+      --accent: #1e3a5f;
       --accent-foreground: var(--snow);
 
       /* Form Fields */
@@ -160,6 +160,18 @@
   --color-separator: var(--separator);
   --color-focus: var(--focus);
   --color-link: var(--link);
+
+  /* Starry-night custom palette */
+  --color-navy: #1e3a5f;
+  --color-navy-deep: #152c49;
+  --color-gold: #d6a631;
+  --color-gold-soft: #f3e7c3;
+  --color-gold-dark: #b98a2b;
+  --color-navydark: #142c49;
+  --color-navysoft: #4a668c;
+  --color-cream: #f6f2e9;
+  --color-ink: #263238;
+  --color-ink-muted: #8a8a86;
 
   --color-default: var(--default);
   --color-default-foreground: var(--default-foreground);
