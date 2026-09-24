@@ -11,10 +11,15 @@ import { Star } from '@/components/stars/Star';
 import Toast from 'react-native-toast-message';
 
 export default function ParentHomeScreen() {
-  const { token, user } = useAuth();
+  const { token, user, logout } = useAuth();
   const router = useSafeRouter();
   const [ov, setOv] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+
+  const doLogout = async () => {
+    await logout();
+    router.replace('/');
+  };
 
   const load = useCallback(async () => {
     if (!token) return;
@@ -41,6 +46,15 @@ export default function ParentHomeScreen() {
           title="课前三分钟智慧平台"
           subtitle={`家长您好：${user?.name || ''} · 孩子：${mine?.student_name || '待绑定'}`}
         />
+
+        <View className="px-4 pt-3 flex-row justify-end">
+          <TouchableOpacity
+            onPress={doLogout}
+            className="flex-row items-center bg-white border border-navydark/25 rounded-full px-4 py-2"
+          >
+            <Text className="text-[#c0392b] text-[13px] font-medium">退出登录</Text>
+          </TouchableOpacity>
+        </View>
 
         {!loading && task ? (
           <View className="p-4 -mt-6">
