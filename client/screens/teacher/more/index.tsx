@@ -1,6 +1,7 @@
 import React, { useCallback, useState } from 'react';
 import { View, Text, TouchableOpacity, Modal, KeyboardAvoidingView, Platform } from 'react-native';
 import * as Clipboard from 'expo-clipboard';
+import QRCode from 'react-native-qrcode-svg';
 import { useFocusEffect } from 'expo-router';
 import { useAuth } from '@/contexts/AuthContext';
 import { useSafeRouter } from '@/hooks/useSafeRouter';
@@ -18,6 +19,7 @@ export default function MoreScreen() {
   const [oldPw, setOldPw] = useState('');
   const [newPw, setNewPw] = useState('');
   const [saving, setSaving] = useState(false);
+  const [qrVisible, setQrVisible] = useState(false);
 
   const load = useCallback(async () => {
     if (!token) return;
@@ -95,6 +97,8 @@ export default function MoreScreen() {
             <Text className="text-ink-muted text-[13px] mb-1">一键复制含报名链接的分享文案，转发到微信群、QQ群，家长点开即可注册申报。</Text>
             <Text className="text-[12px] text-[#c0392b] mb-3">提示：请先将本页面部署到公网/手机可访问的地址后再分享。</Text>
             <NavyButton title="复制分享文案" onPress={copyShare} />
+            <View className="h-2" />
+            <NavyButton title="分享二维码" onPress={() => setQrVisible(true)} style={{ backgroundColor: 'transparent', borderWidth: 1, borderColor: '#1e3a5f' }} />
           </Card>
 
           <Card>
@@ -140,6 +144,28 @@ export default function MoreScreen() {
             <NavyButton title="确认修改" onPress={changePw} loading={saving} />
           </View>
         </KeyboardAvoidingView>
+      </Modal>
+
+      {/* 分享二维码弹窗 */}
+      <Modal visible={qrVisible} transparent animationType="fade">
+        <View className="flex-1 bg-black/40 items-center justify-center px-6">
+          <View className="w-full max-w-sm bg-white rounded-3xl p-6 items-center">
+            <View className="w-full flex-row items-center justify-between mb-4">
+              <Text className="text-[18px] font-bold text-navydark">分享报名二维码</Text>
+              <TouchableOpacity onPress={() => setQrVisible(false)} className="px-2 py-1">
+                <Text className="text-ink-muted text-[18px]">✕</Text>
+              </TouchableOpacity>
+            </View>
+            <View className="bg-white p-4 rounded-2xl" style={{ shadowColor: '#1e3a5f', shadowOpacity: 0.15, shadowRadius: 12, shadowOffset: { width: 0, height: 4 }, elevation: 2 }}>
+              <QRCode value={getShareInfo().link} size={200} backgroundColor="#ffffff" color="#1e3a5f" />
+            </View>
+            <Text className="text-[13px] text-ink-muted text-center mt-4 leading-5">
+              家长用微信/QQ/手机扫码即可打开，{'\n'}注册登录后为孩子申报展示主题。
+            </Text>
+            <View className="h-3" />
+            <NavyButton title="关闭" onPress={() => setQrVisible(false)} />
+          </View>
+        </View>
       </Modal>
     </Screen>
   );
