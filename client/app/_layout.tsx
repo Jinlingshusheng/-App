@@ -26,7 +26,7 @@ function RootNavigator() {
 
     if (!isAuthenticated) {
       // 未登录：仅允许停留在登录/注册页
-      if (!inAuth) router.replace('/login');
+      if (!inAuth) router.replace('/');
       return;
     }
 
