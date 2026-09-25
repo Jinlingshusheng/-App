@@ -1,5 +1,8 @@
 import express from "express";
 import cors from "cors";
+import path from "node:path";
+import fs from "node:fs";
+import { fileURLToPath } from "node:url";
 import { ensureTeacher } from "./auth";
 import authRouter from "./routes/auth";
 import rosterRouter from "./routes/roster";
@@ -8,6 +11,8 @@ import submissionRouter from "./routes/submissions";
 import scoreRouter from "./routes/scores";
 import exportRouter from "./routes/export";
 import parentRouter from "./routes/parent";
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 const app = express();
 const port = process.env.PORT || 9091;
@@ -30,6 +35,21 @@ app.use('/api/v1', submissionRouter);   // /tasks/:taskId/submissions, /submissi
 app.use('/api/v1', scoreRouter);
 app.use('/api/v1', exportRouter);       // /tasks/:taskId/export
 app.use('/api/v1', parentRouter);       // /me/overview
+
+// ===== 生产环境托管前端 H5 页面 =====
+// 生产构建会把 Expo Web 产物导出到 server/public，这里负责静态托管 + SPA 回退。
+// 若无该目录（本地开发走 expo dev server），则跳过，不影响 API。
+const publicDir = path.join(__dirname, '..', 'public');
+const indexPath = path.join(publicDir, 'index.html');
+if (fs.existsSync(indexPath)) {
+  app.use(express.static(publicDir));
+  // SPA fallback：非 API 的请求回退到 index.html，支持刷新与深链
+  app.use((req, res, next) => {
+    if (req.path.startsWith('/api')) return next();
+    res.sendFile(indexPath);
+  });
+  console.log('[static] 已托管前端 H5 页面');
+}
 
 // 统一错误处理
 app.use((err: any, _req: any, res: any, _next: any) => {

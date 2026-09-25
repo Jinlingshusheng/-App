@@ -44,4 +44,16 @@ info "开始执行：pnpm run build (server)"
 (pushd "$ROOT_DIR/server" > /dev/null && pnpm run build; popd > /dev/null) || error "dist打包失败"
 info "==================== dist打包完成！====================\n"
 
+info "==================== 前端 H5 打包 ===================="
+info "构建 Expo Web 产物，供生产网页访问（作为服务器 /public 静态资源）"
+# 生产环境前端与后端同域部署，前端 API 使用相对路径 /api/v1
+export EXPO_PUBLIC_BACKEND_BASE_URL=""
+(pushd "$ROOT_DIR/client" > /dev/null && npx expo export --platform web --output-dir ../server/public; popd > /dev/null) || error "前端 H5 打包失败"
+if [ -f "$ROOT_DIR/server/public/index.html" ]; then
+  info "前端 H5 产物已生成：$ROOT_DIR/server/public/index.html"
+else
+  error "前端 H5 产物生成异常"
+fi
+info "==================== 前端 H5 打包完成！====================\n"
+
 info "下一步：执行 ./prod_run.sh 启动服务"
