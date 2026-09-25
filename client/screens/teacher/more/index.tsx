@@ -2,6 +2,7 @@ import React, { useCallback, useState } from 'react';
 import { View, Text, TouchableOpacity, Modal, KeyboardAvoidingView, Platform } from 'react-native';
 import * as Clipboard from 'expo-clipboard';
 import QRCode from 'react-native-qrcode-svg';
+import Svg, { Defs, LinearGradient, Stop, Rect, Circle, Line } from 'react-native-svg';
 import { useFocusEffect } from 'expo-router';
 import { useAuth } from '@/contexts/AuthContext';
 import { useSafeRouter } from '@/hooks/useSafeRouter';
@@ -146,24 +147,71 @@ export default function MoreScreen() {
         </KeyboardAvoidingView>
       </Modal>
 
-      {/* 分享二维码弹窗 */}
-      <Modal visible={qrVisible} transparent animationType="fade">
-        <View className="flex-1 bg-black/40 items-center justify-center px-6">
-          <View className="w-full max-w-sm bg-white rounded-3xl p-6 items-center">
-            <View className="w-full flex-row items-center justify-between mb-4">
-              <Text className="text-[18px] font-bold text-navydark">分享报名二维码</Text>
-              <TouchableOpacity onPress={() => setQrVisible(false)} className="px-2 py-1">
-                <Text className="text-ink-muted text-[18px]">✕</Text>
+      {/* 分享二维码弹窗（星辰海报样式） */}
+      <Modal visible={qrVisible} transparent animationType="fade" onRequestClose={() => setQrVisible(false)}>
+        <View className="flex-1 bg-black/50 items-center justify-center px-5">
+          <View className="w-full max-w-[330px] rounded-[26px] overflow-hidden" style={{ shadowColor: '#0a1626', shadowOpacity: 0.4, shadowRadius: 20, shadowOffset: { width: 0, height: 8 }, elevation: 8 }}>
+            {/* 星空渐变背景 */}
+            <View style={{ backgroundColor: '#142d52' }}>
+              <Svg width="100%" height={440} style={{ position: 'absolute', left: 0, top: 0 }}>
+                <Defs>
+                  <LinearGradient id="skyGrad" x1="0" y1="0" x2="0" y2="1">
+                    <Stop offset="0" stopColor="#0e2547" />
+                    <Stop offset="0.55" stopColor="#1d3d68" />
+                    <Stop offset="1" stopColor="#b9cbe2" />
+                  </LinearGradient>
+                </Defs>
+                <Rect x="0" y="0" width="100%" height="100%" fill="url(#skyGrad)" />
+                {/* 星座连线 */}
+                <Line x1={40} y1={90} x2={90} y2={60} stroke="rgba(246,196,83,0.45)" strokeWidth={1} />
+                <Line x1={90} y1={60} x2={150} y2={105} stroke="rgba(246,196,83,0.45)" strokeWidth={1} />
+                <Line x1={150} y1={105} x2={225} y2={55} stroke="rgba(246,196,83,0.45)" strokeWidth={1} />
+                <Line x1={225} y1={55} x2={288} y2={95} stroke="rgba(246,196,83,0.45)" strokeWidth={1} />
+                <Line x1={120} y1={40} x2={150} y2={105} stroke="rgba(246,196,83,0.35)" strokeWidth={1} />
+                {/* 星点 */}
+                <Circle cx={40} cy={90} r={3} fill="#f6c453" />
+                <Circle cx={90} cy={60} r={2} fill="#f6c453" opacity={0.9} />
+                <Circle cx={150} cy={105} r={2.6} fill="#f6c453" />
+                <Circle cx={225} cy={55} r={2} fill="#f6c453" opacity={0.85} />
+                <Circle cx={288} cy={95} r={3} fill="#f6c453" />
+                <Circle cx={120} cy={40} r={1.6} fill="#fff7e0" opacity={0.9} />
+                <Circle cx={70} cy={150} r={1.6} fill="#fff7e0" opacity={0.7} />
+                <Circle cx={250} cy={140} r={1.8} fill="#fff7e0" opacity={0.75} />
+                <Circle cx={180} cy={175} r={1.4} fill="#fff7e0" opacity={0.6} />
+              </Svg>
+
+              {/* 关闭按钮 */}
+              <TouchableOpacity onPress={() => setQrVisible(false)} className="absolute right-3 top-3 z-10 w-8 h-8 rounded-full bg-white/15 items-center justify-center">
+                <Text className="text-white text-[15px] leading-none">✕</Text>
               </TouchableOpacity>
+
+              <View className="items-center px-6 pb-5">
+                {/* 顶部标题 */}
+                <Text className="text-[#f6c453] text-[13px] tracking-[0.3em] mt-6">星辰中队 · 展示申报</Text>
+                <Text className="text-[#ffdf94] text-[26px] font-bold mt-1.5 text-center"
+                  style={{ textShadowColor: 'rgba(0,0,0,0.35)', textShadowOffset: { width: 0, height: 2 }, textShadowRadius: 4 }}>
+                  课前三分钟{'\n'}等你来分享
+                </Text>
+
+                {/* 功能卡片 */}
+                <View className="w-full bg-[#fdfdfd] rounded-2xl mt-5 overflow-hidden"
+                  style={{ borderWidth: 1, borderColor: 'rgba(246,196,83,0.7)', shadowColor: '#1e3a5f', shadowOpacity: 0.18, shadowRadius: 12, shadowOffset: { width: 0, height: 5 }, elevation: 3 }}>
+                  <View className="bg-[#1e3a5f] py-2">
+                    <Text className="text-[#f6c453] text-[13px] text-center font-semibold tracking-wide">课前三分钟 · 展示主题申报</Text>
+                  </View>
+                  <View className="items-center py-4">
+                    <View className="bg-white p-3 rounded-xl">
+                      <QRCode value={getShareInfo().link} size={172} backgroundColor="#16316a" color="#ffffff" />
+                    </View>
+                  </View>
+                </View>
+
+                {/* 底部提示 */}
+                <Text className="text-[#2f4057] text-[13px] text-center mt-4 leading-6">
+                  家长用微信/QQ/手机扫码即可打开{'\n'}注册登录后为孩子申报展示主题
+                </Text>
+              </View>
             </View>
-            <View className="bg-white p-4 rounded-2xl" style={{ shadowColor: '#1e3a5f', shadowOpacity: 0.15, shadowRadius: 12, shadowOffset: { width: 0, height: 4 }, elevation: 2 }}>
-              <QRCode value={getShareInfo().link} size={200} backgroundColor="#ffffff" color="#1e3a5f" />
-            </View>
-            <Text className="text-[13px] text-ink-muted text-center mt-4 leading-5">
-              家长用微信/QQ/手机扫码即可打开，{'\n'}注册登录后为孩子申报展示主题。
-            </Text>
-            <View className="h-3" />
-            <NavyButton title="关闭" onPress={() => setQrVisible(false)} />
           </View>
         </View>
       </Modal>
