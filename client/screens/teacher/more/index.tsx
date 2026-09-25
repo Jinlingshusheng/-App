@@ -98,7 +98,7 @@ export default function MoreScreen() {
             <Text className="text-[12px] text-[#c0392b] mb-3">提示：请先将本页面部署到公网/手机可访问的地址后再分享。</Text>
             <NavyButton title="复制分享文案" onPress={copyShare} />
             <View className="h-2" />
-            <NavyButton title="分享二维码" onPress={() => setQrVisible(true)} style={{ backgroundColor: 'transparent', borderWidth: 1, borderColor: '#1e3a5f' }} />
+            <NavyButton title="复制分享二维码" onPress={() => setQrVisible(true)} />
           </Card>
 
           <Card>
